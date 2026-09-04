@@ -142,6 +142,17 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 - 落地物：`packages/ui-reference/design-tokens.json`（v2，单一源：core/colors.light/colors.dark[护眼]/componentHints）、`packages/ui-reference/style-guide.md`（v2，codex 强制规范含护眼三原则与禁止项）。
 - 下一步：用该基线跑 1 个 pilot 双端 app（kb-app 前端重做）验证一致性。
 
+## 14. 产品分级 × 技术选型框架（用户 2026-09-04 确立）
+
+后端选型**按产品类型分级，不搞一刀切**：
+
+| 产品类型 | 特征 | 技术策略 |
+|---|---|---|
+| **C 端单机/本地付费应用** | 用户一次付费、本地使用 | **无需重型后端**：前端（React/Expo）+ 本地存储（IndexedDB / SQLite / AsyncStorage）；数据留在本机；需要时再加极简同步 |
+| **多人平台（B 端或 C 端 SaaS）** | 多用户并发、需支撑 | **Java Spring Boot**（用户主场可 debug + 求职同栈 + 可扩展路径：PostgreSQL/MySQL → Redis/消息队列，均为其熟悉域）；备选 Node/TS |
+
+Python 排除（用户自评难找 bug）。pilot（kb-app）属**第一档**：重做前端为主，后端按本地形态定。
+
 ## 12. 后续待确认
 
 - 第一批 app 的类型清单（决定 type-preset 表）；
