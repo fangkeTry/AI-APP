@@ -1,5 +1,5 @@
 {
-  "$schema_note": "AI-APP 设计 tokens v1（2026-09-04 用户定案：结构=Apple 明亮留白；Light=Apple蓝+白；Dark=炭黑+紫罗兰）。单一源，经 style-dictionary 生成 Web Tailwind theme 与 NativeWind config。",
+  "$schema_note": "AI-APP 设计 tokens v2（2026-09-04 终版：结构=Apple 明亮留白；Light=Apple蓝#0071e3+白；Dark=护眼低饱和蓝，暖炭底#16130f+暖白字#d9d2c6+强调#6fa3d8，与日间同色相品牌统一）。单一源，经 style-dictionary 生成 Web Tailwind theme 与 NativeWind config。",
   "core": {
     "fontFamily": {
       "ui": ["-apple-system", "BlinkMacSystemFont", "\"SF Pro Text\"", "\"PingFang SC\"", "\"Microsoft YaHei\"", "system-ui", "sans-serif"],
@@ -42,26 +42,27 @@
       "shadowCard": "0 1px 2px rgba(0,0,0,0.04), 0 1px 6px rgba(0,0,0,0.04)"
     },
     "dark": {
-      "bg": "#0e0e12",
-      "bgSoft": "#14141b",
-      "surface": "#16161e",
-      "surfaceSoft": "#1b1b24",
-      "border": "#23232e",
-      "borderStrong": "#33333f",
-      "text": "#f2f2f4",
-      "textSecondary": "#9b9ba6",
-      "textTertiary": "#5d5d68",
-      "accent": "#7c6cf0",
-      "accentHover": "#8b7cf2",
-      "accentActive": "#6e5de8",
-      "accentSoft": "#1f1a33",
-      "onAccent": "#ffffff",
-      "link": "#a99af5",
-      "success": "#32d74b",
-      "warning": "#ffd60a",
-      "danger": "#ff453a",
-      "dangerSoft": "#3a1f1f",
-      "shadowCard": "0 1px 2px rgba(0,0,0,0.3)"
+      "_note": "护眼暗色（2026-09-04 定案）：暖炭底避免纯黑眩光、文字非纯白降亮度、强调=低饱和蓝(与日间 Apple 蓝同色相，品牌统一)",
+      "bg": "#16130f",
+      "bgSoft": "#1d1914",
+      "surface": "#1d1914",
+      "surfaceSoft": "#211c16",
+      "border": "#2a251d",
+      "borderStrong": "#3a342a",
+      "text": "#d9d2c6",
+      "textSecondary": "#94897a",
+      "textTertiary": "#6b6254",
+      "accent": "#6fa3d8",
+      "accentHover": "#85b4e2",
+      "accentActive": "#5f96cf",
+      "accentSoft": "#1c2836",
+      "onAccent": "#16130f",
+      "link": "#8db9e6",
+      "success": "#6cbf8b",
+      "warning": "#d9b05c",
+      "danger": "#d98a7a",
+      "dangerSoft": "#3a2620",
+      "shadowCard": "0 1px 2px rgba(0,0,0,0.35)"
     }
   },
   "componentHints": {

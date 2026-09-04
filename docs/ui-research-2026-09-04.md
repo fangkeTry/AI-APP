@@ -137,10 +137,10 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 
 - **结构**：Apple 明亮留白（§8 C 组），双端通用。
 - **Light 模式** = 组合 1：Apple 蓝 `#0071e3` + 白底。
-- **Dark 模式** = 组合 3：炭黑 `#0e0e12` + 紫罗兰 `#7c6cf0`（默认跟随系统，可手动切换）。
-- 落地物：`packages/ui-reference/design-tokens.json`（单一 tokens 源，core/colors.light/colors.dark/componentHints）、`packages/ui-reference/style-guide.md`（codex 生成 UI 的强制规范与禁止项）。
-- 备注：Light/Dark 强调色不同（蓝 vs 紫）是用户选择；tokens 语义化，日后若想统一为同一色相只需改 accent 两处。
-- 下一步：用该基线跑 1 个 pilot 双端 app 验证一致性。
+- **Dark 模式** = 6c 护眼低饱和蓝（定案）：暖炭底 `#16130f` + 暖白低亮文字 `#d9d2c6` + 强调 `#6fa3d8`（与日间同色相低亮版，默认跟随系统）。
+- **设计取舍记录**：中途曾定 Dark=炭黑+紫罗兰（组合 3），经品牌一致性讨论后收敛——跨模式换色相会稀释品牌，改同色相低亮版；用户补充"夜晚护眼"需求 → 暗色全面采用护眼原则（非纯黑底/非纯白字/低饱和强调/避免大面积高能蓝紫），强调色小面积点缀即可。
+- 落地物：`packages/ui-reference/design-tokens.json`（v2，单一源：core/colors.light/colors.dark[护眼]/componentHints）、`packages/ui-reference/style-guide.md`（v2，codex 强制规范含护眼三原则与禁止项）。
+- 下一步：用该基线跑 1 个 pilot 双端 app（kb-app 前端重做）验证一致性。
 
 ## 12. 后续待确认
 
