@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-APP 风格看板 — 简洁高级方向对比</title>
+<style>
+  :root{--bd:#e2e2e2;--tx:#202124;--mut:#6b6b6f}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f4f4f6;color:var(--tx)}
+  header{padding:28px 32px 8px;max-width:1400px;margin:auto}
+  header h1{margin:0 0 6px;font-size:22px}
+  header p{margin:0;color:var(--mut);font-size:14px;line-height:1.6}
+  .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px;padding:22px 32px 40px;max-width:1400px;margin:auto}
+  .panel{border:1px solid var(--bd);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+  .meta{padding:12px 16px;border-bottom:1px solid var(--bd)}
+  .meta h2{margin:0;font-size:15px}
+  .meta .desc{margin:4px 0 0;font-size:12px;color:var(--mut);line-height:1.5}
+  .meta .links{margin-top:6px;font-size:12px}
+  .meta .links a{color:#1a6dd4;text-decoration:none;margin-right:10px;white-space:nowrap}
+  .meta .links a:hover{text-decoration:underline}
+  .shot{padding:18px;flex:1}
+  /* ---------- 迷你界面公共骨架 ---------- */
+  .mini{display:flex;flex-direction:column;gap:12px;font-size:13px}
+  .mini .nav{display:flex;align-items:center;gap:10px}
+  .mini .nav .logo{width:18px;height:18px;border-radius:5px}
+  .mini .nav .brand{font-weight:600;font-size:13px}
+  .mini .nav .links{display:flex;gap:12px;flex:1}
+  .mini .nav .ln{opacity:.65;font-size:12px}
+  .mini h3{margin:0;font-size:20px;letter-spacing:-.01em;line-height:1.25}
+  .mini p{margin:0;font-size:12.5px;line-height:1.6;opacity:.75}
+  .mini .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mini .card{border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .mini .card b{font-size:13px}
+  .mini .card span{font-size:11px;line-height:1.5;opacity:.7}
+  .mini .btn{border:0;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;align-self:flex-start}
+  .mini .btn.ghost{background:transparent}
+  .mini input{width:100%;border-radius:8px;padding:8px 10px;font-size:12.5px;outline:none}
+  .mini .row{display:flex;gap:8px;align-items:center}
+  .mini .pill{border-radius:999px;padding:2px 8px;font-size:10.5px}
+  /* ---------- vibe 1 暗色科技感 (Linear/Arc) ---------- */
+  .v1{background:#0b0b10;color:#ececee}
+  .v1 .mini .logo{background:linear-gradient(135deg,#6e6ef0,#a855f7)}
+  .v1 .mini .ln{color:#a0a0ab}
+  .v1 .mini h3{color:#f5f5f7}
+  .v1 .mini p{color:#a7a7b0}
+  .v1 .mini .card{background:#14141c;border:1px solid #23232e}
+  .v1 .mini .btn{background:#5b5bd6;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 6px 18px -6px rgba(91,91,214,.55)}
+  .v1 .mini .btn.ghost{color:#cfcfe0;border:1px solid #2c2c38}
+  .v1 .mini input{background:#14141c;border:1px solid #2c2c38;color:#ececee}
+  .v1 .mini input::placeholder{color:#5d5d68}
+  .v1 .mini .pill{background:#1d1d2b;color:#a9a9ff;border:1px solid #2f2f45}
+  /* ---------- vibe 2 黑白极简 (Vercel/Geist) ---------- */
+  .v2 .mini .logo{background:#000}
+  .v2 .mini .ln{color:#3a3a3a}
+  .v2 .mini .card{background:#fafafa;border:1px solid #e4e4e4}
+  .v2 .mini .btn{background:#000;color:#fff}
+  .v2 .mini .btn.ghost{color:#171717;border:1px solid #d4d4d4}
+  .v2 .mini input{border:1px solid #d4d4d4;background:#fff;color:#000}
+  .v2 .mini input::placeholder{color:#999}
+  .v2 .mini .pill{background:#fff;color:#000;border:1px solid #d4d4d4}
+  .v2 .mini h3{letter-spacing:-.04em}
+  /* ---------- vibe 3 明亮留白 (Apple/claude.ai) ---------- */
+  .v3 .shot{padding:28px 20px}
+  .v3 .mini{font-size:13.5px}
+  .v3 .mini h3{font-size:22px;font-weight:600;letter-spacing:-.02em}
+  .v3 .mini p{font-size:13px}
+  .v3 .mini .logo{background:linear-gradient(135deg,#0071e3,#5ac8fa);border-radius:50%}
+  .v3 .mini .card{border:1px solid #e8e8ed;background:#fff}
+  .v3 .mini .btn{border-radius:999px;background:#0071e3;color:#fff;padding:9px 20px}
+  .v3 .mini .btn.ghost{color:#0071e3;border:1px solid #d0d0d8}
+  .v3 .mini input{border:1px solid #d8d8df;background:#fafafc}
+  .v3 .mini .pill{background:#eef2f8;color:#0066cc}
+  /* ---------- vibe 4 柔和中性 (Notion) ---------- */
+  .v4{background:#f7f6f2;color:#37352f}
+  .v4 .shot{background:#fff}
+  .v4 .mini .logo{background:linear-gradient(135deg,#37352f,#6f6d66)}
+  .v4 .mini .ln{color:#78756d}
+  .v4 .mini .card{background:#f7f6f2;border:1px solid #ece9e0;border-radius:12px}
+  .v4 .mini .btn{border-radius:8px;background:#37352f;color:#fff}
+  .v4 .mini .btn.ghost{color:#37352f;border:1px solid #d9d5cb}
+  .v4 .mini input{border:1px solid #e3e0d8;background:#fff}
+  .v4 .mini .pill{background:#fff;border:1px solid #e3e0d8}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI-APP 风格看板 · 简洁高级方向对比</h1>
+  <p>四个方向各渲染了一组同构的迷你界面（导航/标题/卡片/按钮/输入框/标签）。<b>说不清就指：像哪个区？</b>可以跨区组合（如"A 的配色 + D 的圆角"）。看板为纯本地文件，无外部资源；点击站点链接可看真实产品。</p>
+</header>
+<div class="wrap">
+
+  <!-- A 暗色科技感 -->
+  <section class="panel v1">
+    <div class="meta">
+      <h2>A · 暗色科技感</h2>
+      <p class="desc">深底、低饱和、克制高光；开发者/效率工具气质，信息层级靠亮度而非边框。</p>
+      <div class="links"><a href="https://linear.app" target="_blank">Linear ↗</a><a href="https://arc.net" target="_blank">Arc ↗</a><a href="https://www.raycast.com" target="_blank">Raycast ↗</a></div>
+    </div>
+    <div class="shot"><div class="mini">
+      <div class="nav"><span class="logo"></span><span class="brand">Nova</span><span class="links"><span class="ln">概览</span><span class="ln">项目</span><span class="ln">设置</span></span><span class="pill">PRO</span></div>
+      <h3>把想法变成产品</h3>
+      <p>深色界面与柔和高光，让内容聚焦。适合注重效率与沉浸感的工具型应用。</p>
+      <div class="row"><button class="btn">开始使用</button><button class="btn ghost">查看文档</button></div>
+      <div class="cards">
+        <div class="card"><b>仪表盘</b><span>实时数据一目了然，重点信息高亮呈现。</span></div>
+        <div class="card"><b>自动化</b><span>流程串联零成本，让重复劳动消失。</span></div>
+      </div>
+      <input placeholder="搜索项目…">
+    </div></div>
+  </section>
+
+  <!-- B 黑白极简 -->
+  <section class="panel v2">
+    <div class="meta">
+      <h2>B · 黑白极简</h2>
+      <p class="desc">白底黑字、细边框、几乎无装饰；排版即设计（Geist 精神），极端克制与清晰。</p>
+      <div class="links"><a href="https://vercel.com" target="_blank">Vercel ↗</a><a href="https://stripe.com" target="_blank">Stripe ↗</a><a href="https://nextjs.org" target="_blank">Next.js ↗</a></div>
+    </div>
+    <div class="shot"><div class="mini">
+      <div class="nav"><span class="logo"></span><span class="brand">Void</span><span class="links"><span class="ln">产品</span><span class="ln">定价</span><span class="ln">文档</span></span><span class="pill">v2</span></div>
+      <h3>少即是多</h3>
+      <p>纯黑白的层级，文字即界面。适合追求速度感与技术信任度的产品。</p>
+      <div class="row"><button class="btn">Deploy</button><button class="btn ghost">Learn more</button></div>
+      <div class="cards">
+        <div class="card"><b>速度</b><span>全球边缘网络，毫秒级响应。</span></div>
+        <div class="card"><b>可靠</b><span>企业级 SLA，随时可查。</span></div>
+      </div>
+      <input placeholder="Search…">
+    </div></div>
+  </section>
+
+  <!-- C 明亮留白 -->
+  <section class="panel v3">
+    <div class="meta">
+      <h2>C · 明亮留白</h2>
+      <p class="desc">大留白、轻盈字阶、胶囊按钮；柔和、可信、面向大众（Apple / claude.ai 气质）。</p>
+      <div class="links"><a href="https://www.apple.com" target="_blank">Apple ↗</a><a href="https://claude.ai" target="_blank">Claude ↗</a><a href="https://www.anthropic.com" target="_blank">Anthropic ↗</a></div>
+    </div>
+    <div class="shot"><div class="mini">
+      <div class="nav"><span class="logo"></span><span class="brand">Lumen</span><span class="links"><span class="ln">首页</span><span class="ln">功能</span><span class="ln">关于</span></span></div>
+      <h3>轻盈、明亮、留白</h3>
+      <p>让呼吸感成为界面的一部分。适合面向大众、强调亲和与品质的应用。</p>
+      <div class="row"><button class="btn">了解更多</button><button class="btn ghost">联系我们</button></div>
+      <div class="cards">
+        <div class="card"><b>简单</b><span>一次只做一件事，做到最好。</span></div>
+        <div class="card"><b>安全</b><span>你的数据，始终由你掌控。</span></div>
+      </div>
+      <input placeholder="搜索…">
+    </div></div>
+  </section>
+
+  <!-- D 柔和中性 -->
+  <section class="panel v4">
+    <div class="meta">
+      <h2>D · 柔和中性</h2>
+      <p class="desc">米白底、圆角卡片、柔边框；中性不抢戏（Notion / Figma 气质），内容型应用的底色。</p>
+      <div class="links"><a href="https://www.notion.so" target="_blank">Notion ↗</a><a href="https://www.figma.com" target="_blank">Figma ↗</a><a href="https://www.linear.app" target="_blank">（对比）Linear ↗</a></div>
+    </div>
+    <div class="shot"><div class="mini">
+      <div class="nav"><span class="logo"></span><span class="brand">Atlas</span><span class="links"><span class="ln">空间</span><span class="ln">模板</span><span class="ln">日历</span></span></div>
+      <h3>记录、组织、创造</h3>
+      <p>中性底色衬托内容本身，圆角与柔边降低压力。适合笔记/知识/协作型应用。</p>
+      <div class="row"><button class="btn">新建页面</button><button class="btn ghost">浏览模板</button></div>
+      <div class="cards">
+        <div class="card"><b>知识库</b><span>结构自由，随想法生长。</span></div>
+        <div class="card"><b>协作</b><span>多人同屏，实时同步。</span></div>
+      </div>
+      <input placeholder="快速查找…">
+    </div></div>
+  </section>
+
+</div>
+</body>
+</html>
