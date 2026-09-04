@@ -12,7 +12,9 @@
 
 | 应用 | 说明 | 技术 |
 |---|---|---|
-| [apps/kb-app](apps/kb-app/) | 本地 Web 知识库小站：列表/新建/编辑/markdown 渲染/搜索 | Python 3 标准库单文件 |
+| [apps/kb-app](apps/kb-app/) | 本地 Web 知识库小站：列表/新建/编辑/markdown 渲染/搜索，Light/Dark 双主题 | React + Vite + TS + Tailwind 前端（`web/`）+ Python 3 标准库服务端（`kb.py` 托管静态产物 + 文件 API） |
+
+各应用启动方式见其 README（kb-app：`apps/kb-app/README.md`「启动方式」含完整/开发/纯 API 三种模式）。
 
 ## 开发流程
 

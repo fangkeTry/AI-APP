@@ -1,34 +1,82 @@
 # kb-app — 本地 Web 知识库小站
 
 > 建立：2026-09-04（「dsh 设计 → codex 实现 → dsh 评审」闭环第 1 个交付物）
-> 技术：Python 3 标准库单文件，零第三方依赖。设计简报见 `docs/tasks/kb-app.brief.md`。
+> 技术：前端 React 18 + Vite + TypeScript + Tailwind（`web/`，样式 token 拷贝自 `packages/ui-reference/design-tokens.json`）；服务端 Python 3 标准库零依赖（`kb.py`，托管前端构建产物 + 文件 API）。
+> 设计简报：`docs/kb-app.brief.md`（初版）、`docs/rebuild-frontend.brief.md`（前端重做 pilot）；前端细节另见 `web/README.md`。
 
-## 用法
+## 启动方式
+
+### 方式一：完整启动（构建后由 Python 服务托管，推荐日常使用）
 
 ```bash
-cd /home/fangke/dsh-test/kb-app && python3 kb.py [--port 8787] [--dir kb_data]
-# 浏览器打开 http://127.0.0.1:8787
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app/web
+npm install          # 仅首次 / 依赖变更后
+npm run build        # 前端源码有改动时必须先重新构建
+cd ..
+python3 kb.py --port 8787
 ```
 
-- 仅监听 `127.0.0.1`，本机工具无鉴权。
-- 笔记存为 `kb_data/<标题>.md`（UTF-8，目录自动创建，已 gitignore）。
-- 功能：列表 / 新建 / 编辑 / markdown 常用子集渲染 / 关键词搜索（子串匹配，带上下文摘要）。
+浏览器打开 <http://127.0.0.1:8787>。
+
+- 服务仅监听 `127.0.0.1`，本机工具无鉴权。
+- Python 服务托管 `web/dist` 静态产物并提供 `/api/*` 文件 API；数据目录 `kb_data/` 相对**当前工作目录**创建（上面从 kb-app 目录启动即落在 `kb_data/`，已 gitignore）。
+- 若 `web/dist` 未构建，首页返回 503 提示"请先在 web 目录运行 npm run build"。
+
+### 方式二：开发模式（Vite 热更新）
+
+```bash
+# 终端 1：后端（提供 /api 与数据读写）
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app
+python3 kb.py --port 8787
+
+# 终端 2：前端 dev server（/api 自动代理到 127.0.0.1:8787）
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app/web
+npm run dev
+```
+
+浏览器打开 Vite 提示的地址（默认 <http://127.0.0.1:5173>），改 `web/src/` 即时生效。
+
+### 方式三：仅后端 API（不起前端）
+
+```bash
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app
+python3 kb.py --port 8787 --dir /tmp/kb-test-data
+# curl 直接测接口，见下方「HTTP 接口」
+```
+
+### 验收自测（改动后快速回归）
+
+```bash
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app
+python3 kb.py --port 8787 &   # 记下 PID，测完 kill
+curl -s http://127.0.0.1:8787/ | grep -i '<div id="root"'          # React 入口
+curl -s -X POST http://127.0.0.1:8787/api/save -H 'Content-Type: application/json' \
+  -d '{"title":"测试笔记","content":"# 标题"}'                        # {"ok":true}
+curl -s 'http://127.0.0.1:8787/api/search?q=标题'                    # 命中测试笔记
+# 测完：kill <PID> 并删除 kb_data/测试笔记.md（防自匹配勿用 pkill -f 'kb.py ...'）
+```
+
+## 功能
+
+列表（桌面左右分栏 / 移动单列）/ 新建 / 编辑 / markdown 渲染（服务端出 HTML）/ 关键词搜索（标题或正文子串命中，带上下文摘要）；Light（Apple 蓝白）/ Dark（护眼低饱和蓝）跟随系统 + 手动切换（记忆在 localStorage）。
 
 ## HTTP 接口
 
 | 接口 | 说明 |
 |---|---|
-| `GET /` | 单页前端（内嵌，无外部资源） |
+| `GET /`（及任意非 API 路径） | React 单页应用（SPA，子路径回退 index.html）；未构建时 503 |
 | `GET /api/list` | 笔记列表，按更新时间倒序 |
 | `GET /api/note?name=<标题>.md` | 返回原始 markdown + 渲染 HTML；不存在 404 |
 | `POST /api/save` | JSON `{title, content, original_content?}`；同名内容不同且无 original_content 时 409 |
-| `GET /api/search?q=` | 子串搜索，返回标题 + 上下文摘要 |
+| `GET /api/search?q=` | 子串搜索（标题或正文），返回标题 + 上下文摘要 |
+| 其他 `/api/*` | 404 `{"error":"接口不存在"}` |
 
 ## 安全要点（评审确认）
 
 - 标题服务端校验：非空、不含 `/`、`\`、`..`、`\x00`（防路径穿越）。
 - HTML 全部经 `html.escape` 后仅放行有限行内语法；链接协议白名单 `https?://`、`mailto:`。
 - 单笔记 2MB 上限（413）。
+- 静态托管只从 `web/dist` 读文件（路径解析后校验在目录内），防目录穿越。
 
 ## 开发记录 / 已知问题
 
