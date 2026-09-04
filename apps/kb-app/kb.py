@@ -4,35 +4,12 @@
 import argparse
 import html
 import json
+import mimetypes
 import re
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
-
-
-PAGE = r'''<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>本地知识库</title><style>
-body{font:16px/1.6 system-ui,sans-serif;max-width:1050px;margin:auto;padding:20px;color:#202124}button,input,textarea{font:inherit}header{display:flex;gap:10px;align-items:center;flex-wrap:wrap}header input{flex:1;min-width:220px;padding:7px}main{display:grid;grid-template-columns:280px 1fr;gap:28px;margin-top:20px}aside{border-right:1px solid #ddd;padding-right:18px}.item{display:block;width:100%;text-align:left;border:0;background:none;padding:8px;cursor:pointer}.item:hover{background:#f2f4f7}.muted{color:#666;font-size:.85em}textarea{box-sizing:border-box;width:100%;min-height:430px;padding:10px}pre{overflow:auto;background:#f5f5f5;padding:12px}code{background:#f5f5f5;padding:2px 4px}pre code{padding:0}.actions{display:flex;gap:8px;margin:10px 0}.error{color:#b00020}@media(max-width:700px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid #ddd}}
-</style></head><body>
-<header><h1>本地知识库</h1><input id="search" placeholder="搜索笔记内容"><button id="new">新建笔记</button></header>
-<main><aside><h2 id="sideTitle">笔记</h2><div id="list"></div></aside><section id="view"><p class="muted">从左侧选择笔记，或新建一篇。</p></section></main>
-<script>
-const list=document.querySelector('#list'), view=document.querySelector('#view'), search=document.querySelector('#search');
-let current=null, original='';
-async function api(url,options){const r=await fetch(url,options), data=await r.json();if(!r.ok)throw new Error(data.error||'请求失败');return data}
-function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=fn;return b}
-async function refresh(){const d=await api('/api/list');document.querySelector('#sideTitle').textContent='笔记';list.replaceChildren();for(const n of d.notes){const b=button(n.title,()=>openNote(n.title));b.className='item';const t=document.createElement('div');t.className='muted';t.textContent=new Date(n.updated).toLocaleString();b.append(t);list.append(b)}}
-async function openNote(title){try{const d=await api('/api/note?name='+encodeURIComponent(title+'.md'));current=d.title;original=d.content;const h=document.createElement('h2');h.textContent=d.title;const a=document.createElement('div');a.className='actions';a.append(button('编辑',()=>editor(d.title,d.content)));const body=document.createElement('article');body.innerHTML=d.content_html;view.replaceChildren(h,a,body)}catch(e){showError(e)}}
-function editor(title='',content=''){current=title||null;original=content;const h=document.createElement('h2');h.textContent=title?'编辑：'+title:'新建笔记';const ta=document.createElement('textarea');ta.value=content;const a=document.createElement('div');a.className='actions';a.append(button('保存',()=>save(title,ta.value)),button('取消',()=>title?openNote(title):view.replaceChildren()));view.replaceChildren(h,a,ta);ta.focus()}
-async function save(title,content){if(!title){title=prompt('请输入标题：')||''}try{await api('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,content,original_content:current===title?original:undefined})});await refresh();await openNote(title)}catch(e){showError(e)}}
-function showError(e){const p=document.createElement('p');p.className='error';p.textContent=e.message;view.prepend(p)}
-document.querySelector('#new').onclick=()=>{const title=prompt('请输入新笔记标题：');if(title)editor(title,'')};
-let timer;search.oninput=()=>{clearTimeout(timer);timer=setTimeout(doSearch,200)};
-async function doSearch(){const q=search.value;const d=await api('/api/search?q='+encodeURIComponent(q));document.querySelector('#sideTitle').textContent=q?'搜索结果':'笔记';if(!q)return refresh();list.replaceChildren();for(const x of d.results){const b=button(x.title,()=>openNote(x.title));b.className='item';const s=document.createElement('div');s.className='muted';s.textContent=x.snippet;b.append(s);list.append(b)}}
-refresh().catch(showError);
-</script></body></html>'''
 
 
 def valid_title(title):
@@ -56,7 +33,6 @@ def inline(text):
 
 def safe_link(match):
     label, url = match.groups()
-    # 仅放行常见外链协议，避免渲染出 javascript: 链接。
     if not re.match(r"^(https?://|mailto:)", html.unescape(url), re.I):
         url = "#"
     return '<a href="{}" rel="noopener noreferrer">{}</a>'.format(url, label)
@@ -99,7 +75,7 @@ def render_markdown(source):
             flush_paragraph(); close_list()
         else:
             close_list(); paragraph.append(line)
-    if in_code:  # 未闭合围栏仍按代码显示
+    if in_code:
         output.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
     flush_paragraph(); close_list()
     return "\n".join(output)
@@ -107,6 +83,16 @@ def render_markdown(source):
 
 class Handler(BaseHTTPRequestHandler):
     data_dir = Path("kb_data")
+    web_dir = Path(__file__).resolve().parent / "web" / "dist"
+
+    def parse_request(self):
+        # curl 可直接发送中文 URL；先编码高位字节，避免 Latin-1 控制字符被误判为空白。
+        self.raw_requestline = re.sub(
+            rb"[\x80-\xff]",
+            lambda match: f"%{match.group(0)[0]:02X}".encode("ascii"),
+            self.raw_requestline,
+        )
+        return super().parse_request()
 
     def parsed_url(self):
         # curl 可直接发送中文 URL；http.server 会先按 Latin-1 解读请求行。
@@ -124,13 +110,31 @@ class Handler(BaseHTTPRequestHandler):
     def send_error_json(self, status, message):
         self.send_json({"error": message}, status)
 
+    def send_static(self, request_path):
+        """只从构建目录读取文件；SPA 子路径回退到 index.html。"""
+        if not self.web_dir.is_dir():
+            body = "前端尚未构建，请先在 web 目录运行 npm run build。".encode("utf-8")
+            self.send_response(503); self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+            return
+        relative = request_path.lstrip("/") or "index.html"
+        target = (self.web_dir / relative).resolve()
+        try:
+            target.relative_to(self.web_dir.resolve())
+        except ValueError:
+            return self.send_error_json(404, "文件不存在")
+        if not target.is_file():
+            target = self.web_dir / "index.html"
+        body = target.read_bytes()
+        content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+        if content_type.startswith("text/") or content_type in {"application/javascript", "application/json"}:
+            content_type += "; charset=utf-8"
+        self.send_response(200); self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+
     def do_GET(self):
         parsed = self.parsed_url()
-        if parsed.path == "/":
-            body = PAGE.encode("utf-8"); self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Content-Length", str(len(body)))
-            self.end_headers(); self.wfile.write(body)
-        elif parsed.path == "/api/list":
+        if parsed.path == "/api/list":
             notes = [{"title": p.stem, "updated": datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()} for p in self.data_dir.glob("*.md") if p.is_file()]
             notes.sort(key=lambda n: n["updated"], reverse=True); self.send_json({"notes": notes})
         elif parsed.path == "/api/note":
@@ -146,14 +150,19 @@ class Handler(BaseHTTPRequestHandler):
             results = []
             if query:
                 for path in self.data_dir.glob("*.md"):
-                    content = path.read_text(encoding="utf-8"); pos = content.find(query)
-                    if pos >= 0:
+                    content = path.read_text(encoding="utf-8")
+                    title_pos, content_pos = path.stem.find(query), content.find(query)
+                    if title_pos >= 0 or content_pos >= 0:
+                        pos = max(content_pos, 0)
                         start, end = max(0, pos - 40), min(len(content), pos + len(query) + 40)
                         snippet = ("…" if start else "") + content[start:end].replace("\n", " ") + ("…" if end < len(content) else "")
+                        if not snippet: snippet = "标题匹配"
                         results.append({"title": path.stem, "snippet": snippet})
             self.send_json({"results": results})
-        else:
+        elif parsed.path.startswith("/api/"):
             self.send_error_json(404, "接口不存在")
+        else:
+            self.send_static(parsed.path)
 
     def do_POST(self):
         if self.parsed_url().path != "/api/save": return self.send_error_json(404, "接口不存在")
