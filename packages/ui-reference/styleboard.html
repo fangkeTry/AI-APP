@@ -128,6 +128,22 @@
   .cx5 .mini .pill{background:#eceaff;color:#4739b8;border:1px solid #d3cef5}
   .cx5 .mini .logo{background:linear-gradient(135deg,#5f51d6,#8b7cf2)}
   .cx1 .mini .logo{background:linear-gradient(135deg,#0071e3,#5ac8fa);border-radius:50%}
+  /* 护眼暗色系：暖炭底 + 暖白低亮文字，只换强调色 */
+  .ce{--bg:#16130f;--tx:#d9d2c6;--sub:#94897a;--border:#2a251d;--card:#1d1914;--soft:#1d1914;--nav:#e6dfd3}
+  .ce .shot{background:var(--bg)}
+  .ce .mini{color:var(--tx)}
+  .ce .mini .logo{width:18px;height:18px;border-radius:5px}
+  .ce .mini .ln{color:var(--sub)}
+  .ce .mini h3{color:var(--tx)}
+  .ce .mini p{color:var(--sub)}
+  .ce .mini .card{background:var(--card);border:1px solid var(--border)}
+  .ce .mini .btn{border-radius:999px;background:var(--acc);color:#16130f;padding:8px 18px;font-weight:600}
+  .ce .mini .btn.ghost{background:transparent;color:var(--nav);border:1px solid var(--border)}
+  .ce .mini input{border:1px solid var(--border);background:var(--soft);color:var(--tx)}
+  .ce .mini .pill{background:color-mix(in srgb,var(--acc) 16%,var(--card));color:var(--accD);border:1px solid color-mix(in srgb,var(--acc) 30%,var(--card))}
+  .ce6a{--acc:#c9a05e;--accD:#d9b87c}
+  .ce6b{--acc:#9a8fd8;--accD:#b3a9e6}
+  .ce6c{--acc:#6fa3d8;--accD:#8db9e6}
 </style>
 </head>
 <body>
@@ -246,6 +262,8 @@
   <p class="hint">1) "Apple 蓝 + 白"（原 C 版）；2) "黑 + 紫"亮底版；3) "黑 + 紫"暗底版（呼应暗色科技感）。看整体氛围，哪个更像你要的？</p>
   <div class="combogrid" id="comboGrid"></div>
   <p class="hint" style="margin-top:18px"><b>品牌一致性对照</b>：4 = 统一蓝的暗色版（同色相调亮）；5 = 统一紫的亮色版。若认可"同一品牌色"，4/5 与 1/3 二选一组合成 Light+Dark。</p>
+  <p class="hint" style="margin-top:18px"><b>护眼暗色对照</b>：6a/6b/6c 共用护眼基底（暖炭底 #16130f + 暖白低亮文字 #d9d2c6），只换强调色——6a 琥珀金（最护眼）/ 6b 低饱和紫（保留黑紫氛围）/ 6c 低饱和蓝（品牌统一）。</p>
+  <div class="combogrid" id="eyeGrid"></div>
 </div>
 
 <template id="miniTpl">
@@ -270,20 +288,28 @@
     {t:'组合 4 · 统一蓝（暗色版）', d:'与组合 1 同一色相：炭黑底 + 亮蓝 #409cff（同 hue 暗色变体，品牌统一）。', cls:'cx cx4'},
     {t:'组合 5 · 统一紫（亮色版）', d:'与组合 3 同一色相：白底 + 深紫 #5f51d6（同 hue 亮色变体，品牌统一）。', cls:'cx cx5'}
   ];
+  const eyeDefs = [
+    {t:'6a · 护眼琥珀', d:'暖炭底+暖白字，强调琥珀金 #c9a05e：最护眼、暖调高级。', cls:'ce ce6a'},
+    {t:'6b · 护眼低饱和紫', d:'保留你喜欢的黑紫氛围，但降饱和并暖化背景，护眼与审美折中。', cls:'ce ce6b'},
+    {t:'6c · 护眼低饱和蓝', d:'与日间 Apple 蓝同色相，暗底降饱和低亮版，品牌统一+护眼。', cls:'ce ce6c'}
+  ];
   const grid = document.getElementById('comboGrid');
+  const eyeGrid = document.getElementById('eyeGrid');
   const tpl = document.getElementById('miniTpl');
-  for (const c of combos) {
+  function build(secCls, def) {
     const sec = document.createElement('section');
-    sec.className = 'combo ' + c.cls;
+    sec.className = 'combo ' + secCls + ' ' + def.cls;
     const meta = document.createElement('div');
     meta.className = 'meta';
-    meta.innerHTML = '<h3>' + c.t + '</h3><div class="desc">' + c.d + '</div>';
+    meta.innerHTML = '<h3>' + def.t + '</h3><div class="desc">' + def.d + '</div>';
     const shot = document.createElement('div');
     shot.className = 'shot';
     shot.appendChild(tpl.content.cloneNode(true));
     sec.appendChild(meta); sec.appendChild(shot);
-    grid.appendChild(sec);
+    return sec;
   }
+  for (const c of combos) grid.appendChild(build('', c));
+  for (const e of eyeDefs) eyeGrid.appendChild(build('', e));
 </script>
 </body>
 </html>
