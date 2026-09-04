@@ -93,6 +93,34 @@
   .tcard .hex{font-size:11px;color:var(--mut);font-family:ui-monospace,Menlo,monospace}
   .tcard .btn{border:0;border-radius:999px;color:#fff;padding:7px 0;font-size:12.5px;font-weight:600;cursor:pointer}
   .tcard .lnk{font-size:12.5px;font-weight:600;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+  /* ---------- 组合定案区（模板渲染） ---------- */
+  .combowrap{max-width:1400px;margin:0 auto;padding:0 32px 60px}
+  .combowrap h2{font-size:16px;margin:0 0 4px}
+  .combowrap .hint{font-size:13px;color:var(--mut);margin:0 0 14px;line-height:1.6}
+  .combogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
+  .combo{border:1px solid var(--bd);border-radius:14px;overflow:hidden;background:#fff}
+  .combo .meta{padding:12px 16px;border-bottom:1px solid var(--bd)}
+  .combo .meta h3{margin:0;font-size:14px}
+  .combo .meta .desc{margin:4px 0 0;font-size:12px;color:var(--mut);line-height:1.5}
+  .combo .shot{padding:20px}
+  .combo .mini{font-size:13px}
+  /* 变量化配色：三个 combo 各自定义 */
+  .cx{--bg:#fff;--tx:#1d1d1f;--sub:#6e6e73;--border:#e8e8ed;--card:#fff;--soft:#f5f5f7;--acc:#0071e3;--accD:#0062c4;--nav:#000}
+  .cx .shot{background:var(--bg)}
+  .cx .mini{color:var(--tx)}
+  .cx .mini .logo{width:18px;height:18px;border-radius:5px;background:var(--acc)}
+  .cx .mini .ln{color:var(--sub)}
+  .cx .mini h3{color:var(--tx)}
+  .cx .mini p{color:var(--sub)}
+  .cx .mini .card{background:var(--card);border:1px solid var(--border)}
+  .cx .mini .btn{border-radius:999px;background:var(--acc);color:#fff;padding:8px 18px}
+  .cx .mini .btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--border)}
+  .cx .mini input{border:1px solid var(--border);background:var(--soft);color:var(--tx)}
+  .cx .mini .pill{background:color-mix(in srgb,var(--acc) 12%,#fff);color:var(--accD);border:1px solid color-mix(in srgb,var(--acc) 30%,#fff)}
+  .cx .mini .brand{font-weight:600}
+  .cx2{--acc:#7c6cf0;--accD:#5b4bd6;--nav:#000}
+  .cx3{--bg:#0e0e12;--tx:#f2f2f4;--sub:#9b9ba6;--border:#23232e;--card:#17171f;--soft:#17171f;--acc:#7c6cf0;--accD:#a99af5;--nav:#f2f2f4}
+  .cx3 .mini .btn.ghost{color:#d6d6e0;border:1px solid #33333f}
 </style>
 </head>
 <body>
@@ -205,5 +233,47 @@
     <div class="tcard"><div class="sw"><i style="background:#2b2b2d"></i><span class="nm">深石墨</span></div><span class="hex">#2b2b2d</span><button class="btn" style="background:#2b2b2d">主要按钮</button><button class="lnk" style="color:#1d1d1f">强调链接</button></div>
   </div>
 </div>
+
+<div class="combowrap">
+  <h2>组合定案区 · 按你说的两个方向渲染</h2>
+  <p class="hint">1) "Apple 蓝 + 白"（原 C 版）；2) "黑 + 紫"亮底版；3) "黑 + 紫"暗底版（呼应暗色科技感）。看整体氛围，哪个更像你要的？</p>
+  <div class="combogrid" id="comboGrid"></div>
+</div>
+
+<template id="miniTpl">
+  <div class="mini">
+    <div class="nav"><span class="logo"></span><span class="brand">Lumen</span><span class="links"><span class="ln">首页</span><span class="ln">功能</span><span class="ln">关于</span></span><span class="pill">PRO</span></div>
+    <h3>轻盈、明亮、留白</h3>
+    <p>让呼吸感成为界面的一部分。适合强调亲和与品质的产品形态。</p>
+    <div class="row"><button class="btn">开始使用</button><button class="btn ghost">了解更多</button></div>
+    <div class="cards">
+      <div class="card"><b>简单</b><span>一次只做一件事，做到最好。</span></div>
+      <div class="card"><b>安全</b><span>你的数据，始终由你掌控。</span></div>
+    </div>
+    <input placeholder="搜索…">
+  </div>
+</template>
+
+<script>
+  const combos = [
+    {t:'组合 1 · Apple 蓝 + 白', d:'结构=C（Apple 明亮留白），主色 #0071e3 苹果蓝。', cls:'cx cx1'},
+    {t:'组合 2 · 黑 + 紫（亮底）', d:'白底黑字，主按钮/强调为紫罗兰 #7c6cf0（黑做文字与结构，紫做点缀）。', cls:'cx cx2'},
+    {t:'组合 3 · 黑 + 紫（暗底）', d:'炭黑底 #0e0e12 + 紫罗兰强调：Apple 式克制但走暗色科技感。', cls:'cx cx3'}
+  ];
+  const grid = document.getElementById('comboGrid');
+  const tpl = document.getElementById('miniTpl');
+  for (const c of combos) {
+    const sec = document.createElement('section');
+    sec.className = 'combo ' + c.cls;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = '<h3>' + c.t + '</h3><div class="desc">' + c.d + '</div>';
+    const shot = document.createElement('div');
+    shot.className = 'shot';
+    shot.appendChild(tpl.content.cloneNode(true));
+    sec.appendChild(meta); sec.appendChild(shot);
+    grid.appendChild(sec);
+  }
+</script>
 </body>
 </html>
