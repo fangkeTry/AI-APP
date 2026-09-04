@@ -80,7 +80,7 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 - **排除**：政企/企业软件风格（Ant Design 企业感、后台密集表格风一律不用）。
 - **目标**："简洁高级"——无法用语言描述，**必须用视觉锚点指认**（见 §8）。
 - **性能红线**：前端资源不能多；需跑在**性能不好的移动设备**上；弱网也要可用。
-- **形态**：适配移动端；大概率同时覆盖**手机端与 PC 端**（默认响应式 Web；是否含原生 App 待确认）。
+- **形态**：适配移动端；用户 2026-09-04 定案：**Web + 原生 App 双端**（原生技术选型见 §10）。
 
 ## 8. 视觉锚点清单（风格指认用——说不清就看这些）
 
@@ -105,3 +105,19 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 - **移动优先**：Tailwind 默认移动断点起步（mobile-first）；触控目标 ≥44px；弱网下图片懒加载/占位；首屏不阻塞（CWV 友好——[Tailwind 在 CWV 通过率上领先](https://www.pagespeedmatters.com/resources/data-studies/css-frameworks-core-web-vitals)）。
 - **适配策略**：响应式单代码库（PC/手机同源）；可选 PWA（离线/安装）但保持轻量。
 - **可直接装载的现成 skill**：[tailwindcss-mobile-first](https://github.com/NeverSight/learn-skills.dev/blob/main/data/skills-md/josiahsiegel/claude-plugin-marketplace/tailwindcss-mobile-first/SKILL.md)、[tailwindcss-responsive-darkmode](https://raw.githubusercontent.com/NeverSight/skills_feed/refs/heads/main/data/skills-md/josiahsiegel/claude-plugin-marketplace/tailwindcss-responsive-darkmode/SKILL.md)——codex/dsh 生成时保证移动优先与响应式。
+
+## 10. 原生 App 技术选型（用户 2026-09-04 定案：Web + 原生双端）
+
+**主选：Expo（React Native）+ NativeWind**，理由：
+- 与 Web 端同用 **React + TypeScript**，dsh/codex 批量生成成本最低（一套语言、技能可迁移）；
+- Hermes 引擎默认开启，中低端安卓机性能友好；
+- Expo 2026 生态持续扩展（[AppJS 2026 发布](https://expo.dev/blog/expo-highlights-new-products-and-plans-for-the-future)）；
+- NativeWind v5 = Tailwind for RN（[官方文档](https://www.nativewind.dev/v5)），样式写法和 Web 端一致。
+
+**两端风格一致的关键：单一 tokens 源**——用 [style-dictionary](https://github.com/style-dictionary/style-dictionary)（跨平台样式构建系统）从 `tokens.json` 生成：Web 的 Tailwind theme + 原生的 NativeWind config；`packages/ui-reference/` 内放 tokens 源与两端生成物。
+
+**组件参考层（仍守"拷贝不耦合"）**：Web 抄 shadcn 示例；原生侧参考 Expo 官方模板与轻量组件，本地拷贝进每个 app；不引入重型 UI 框架依赖。样式锚点（§8）对两端通用。
+
+**轻量红线延续**：RN 侧避免重型导航/动画依赖、控制重渲染；图片走缓存优化；包体用 Hermes + 按需组件控制。
+
+**待验证**：RN 具体组件参考集质量参差，先以 1 个 pilot 双端 app 验证"同一 tokens + 两端拷贝"的一致性后再批量。
