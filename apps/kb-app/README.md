@@ -1,7 +1,7 @@
 # kb-app — 本地 Web 知识库小站
 
 > 建立：2026-09-04（「dsh 设计 → codex 实现 → dsh 评审」闭环第 1 个交付物）
-> 技术：前端 React 18 + Vite + TypeScript + Tailwind（`web/`，样式 token 拷贝自 `packages/ui-reference/design-tokens.json`）；服务端 Python 3 标准库零依赖（`kb.py`，托管前端构建产物 + 文件 API）。
+> 技术：前端 React 18 + Vite + TypeScript + Tailwind（`web/`，样式 token 拷贝自 `packages/ui-reference/design-tokens.json`）；服务端 Python 3 标准库零依赖（`kb.py`，SQLite 存储 + JSON API + 前端静态托管）。
 > 一键启动：`./start.sh`（详见下文「启动方式」）。
 > 设计简报：`docs/kb-app.brief.md`（初版）、`docs/rebuild-frontend.brief.md`（前端重做 pilot）；前端细节另见 `web/README.md`。
 
@@ -30,7 +30,8 @@ python3 kb.py --port 8787
 浏览器打开 <http://127.0.0.1:8787>。
 
 - 服务仅监听 `127.0.0.1`，本机工具无鉴权。
-- Python 服务托管 `web/dist` 静态产物并提供 `/api/*` 文件 API；数据目录 `kb_data/` 相对**当前工作目录**创建（上面从 kb-app 目录启动即落在 `kb_data/`，已 gitignore）。
+- Python 服务托管 `web/dist` 静态产物并提供 `/api/*`；主数据文件固定为本目录的 `kb.db`，从任意工作目录启动均一致。
+- 首次启动发现 `kb.db` 尚不存在时，会自动导入同目录 `kb_data/*.md`；原文件保留且之后不再由服务读写。
 - 若 `web/dist` 未构建，首页返回 503 提示"请先在 web 目录运行 npm run build"。
 
 ### 方式二：开发模式（Vite 热更新）
@@ -51,7 +52,7 @@ npm run dev
 
 ```bash
 cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app
-python3 kb.py --port 8787 --dir /tmp/kb-test-data
+python3 kb.py --port 8787 --db /tmp/kb-test.db
 # curl 直接测接口，见下方「HTTP 接口」
 ```
 
@@ -64,7 +65,39 @@ curl -s http://127.0.0.1:8787/ | grep -i '<div id="root"'          # React 入�
 curl -s -X POST http://127.0.0.1:8787/api/save -H 'Content-Type: application/json' \
   -d '{"title":"测试笔记","content":"# 标题"}'                        # {"ok":true}
 curl -s 'http://127.0.0.1:8787/api/search?q=标题'                    # 命中测试笔记
-# 测完：kill <PID> 并删除 kb_data/测试笔记.md（防自匹配勿用 pkill -f 'kb.py ...'）
+# 测完：kill <PID>；验收建议用 --db 指向临时数据库（防自匹配勿用 pkill -f）
+```
+
+## 数据形态与导入导出
+
+`kb.db` 是唯一主存储，使用 SQLite WAL 模式和事务保证写入原子性。`kb_data/*.md` 仅作为旧数据首次迁移源；Markdown 也可通过 CLI 批量导入或导出，不再作为运行时真源。
+
+```bash
+python3 kb.py --export /tmp/kb-export       # 全量导出为 UTF-8 Markdown
+python3 kb.py --import /tmp/kb-import       # 只新增；同名异内容跳过，不覆盖
+python3 kb.py --db /tmp/other.db --export /tmp/other-export
+```
+
+`--export`、`--import`、`--backup` 三个动作互斥；未指定动作时启动服务。`--db` 可为每种模式指定数据库，默认路径始终是 `apps/kb-app/kb.db`。
+
+## 备份与恢复
+
+服务运行时推荐使用 SQLite backup API，它能生成事务一致的单文件快照，无需停服：
+
+```bash
+python3 kb.py --backup /tmp/kb-backup.db
+python3 -c 'import sqlite3; c=sqlite3.connect("/tmp/kb-backup.db"); print(c.execute("PRAGMA integrity_check").fetchone()[0])'
+```
+
+也可在服务停止后直接复制 `kb.db`。恢复数据库时先停止服务，将备份文件复制回 `apps/kb-app/kb.db` 后重启；若只有 Markdown 导出，则移走或另存现有数据库后执行导入：
+
+```bash
+# 数据库恢复演练（使用临时目标，不触碰正式数据）
+python3 kb.py --db /tmp/kb-restore.db --backup /tmp/kb-restore-copy.db
+python3 -c 'import sqlite3; c=sqlite3.connect("/tmp/kb-restore-copy.db"); print(c.execute("PRAGMA integrity_check").fetchone()[0])'
+
+# Markdown 恢复到一个新数据库
+python3 kb.py --db /tmp/kb-from-md.db --import /tmp/kb-export
 ```
 
 ## 功能
@@ -82,12 +115,13 @@ curl -s 'http://127.0.0.1:8787/api/search?q=标题'                    # 命中�
 | `GET /api/search?q=` | 子串搜索（标题或正文），返回标题 + 上下文摘要 |
 | 其他 `/api/*` | 404 `{"error":"接口不存在"}` |
 
-## 安全要点（评审确认）
+## 安全与运行边界
 
 - 标题服务端校验：非空、不含 `/`、`\`、`..`、`\x00`（防路径穿越）。
 - HTML 全部经 `html.escape` 后仅放行有限行内语法；链接协议白名单 `https?://`、`mailto:`。
 - 单笔记 2MB 上限（413）。
 - 静态托管只从 `web/dist` 读文件（路径解析后校验在目录内），防目录穿越。
+- 本地单机服务只监听 `127.0.0.1`，因此鉴权、TLS、限流在当前档位 N/A；若改为对外或多人服务，必须先补齐这些能力。
 
 ## 开发记录 / 已知问题
 

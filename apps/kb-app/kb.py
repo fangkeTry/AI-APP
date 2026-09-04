@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""本机使用的单文件 Markdown 知识库。"""
+"""本机使用的 SQLite 知识库。"""
 
 import argparse
 import html
 import json
 import mimetypes
 import re
+import sqlite3
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+
+
+APP_DIR = Path(__file__).resolve().parent
+DEFAULT_DB = APP_DIR / "kb.db"
 
 
 def valid_title(title):
@@ -81,21 +86,148 @@ def render_markdown(source):
     return "\n".join(output)
 
 
+def utc_now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+class ConflictError(Exception):
+    """保存时数据库中的内容已被其他写入修改。"""
+
+
+class SQLiteStore:
+    """SQLite 数据访问层；连接按操作创建，供多线程 HTTP 服务安全使用。"""
+
+    def __init__(self, db_path, migration_dir=None):
+        self.db_path = Path(db_path).resolve()
+        self.migration_dir = Path(migration_dir).resolve() if migration_dir else self.db_path.parent / "kb_data"
+        db_existed = self.db_path.exists()
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._initialize()
+        if not db_existed:
+            imported, _, _ = self.import_directory(self.migration_dir, preserve_mtime=True)
+            if imported:
+                print(f"已从 kb_data 导入 {imported} 篇", flush=True)
+
+    def connect(self):
+        connection = sqlite3.connect(self.db_path, timeout=5)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA busy_timeout = 5000")
+        connection.execute("PRAGMA journal_mode = WAL")
+        return connection
+
+    def _initialize(self):
+        with self.connect() as connection:
+            connection.execute("""CREATE TABLE IF NOT EXISTS notes(
+                title TEXT UNIQUE NOT NULL,
+                content TEXT NOT NULL,
+                created TEXT NOT NULL,
+                updated TEXT NOT NULL
+            )""")
+
+    def list_notes(self):
+        with self.connect() as connection:
+            rows = connection.execute("SELECT title, updated FROM notes ORDER BY updated DESC, title ASC").fetchall()
+        return [dict(row) for row in rows]
+
+    def get_note(self, title):
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT title, content, created, updated FROM notes WHERE title = ?", (title,)
+            ).fetchone()
+        return dict(row) if row else None
+
+    def save(self, title, content, original_content=None, timestamp=None):
+        if not valid_title(title):
+            raise ValueError("invalid title")
+        if not isinstance(content, str):
+            raise TypeError("content must be a string")
+        now = timestamp or utc_now()
+        with self.connect() as connection:
+            # 先取得写锁，再重查当前值，避免并发请求绕过冲突检测。
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute("SELECT content FROM notes WHERE title = ?", (title,)).fetchone()
+            if row:
+                if row["content"] != content and original_content != row["content"]:
+                    raise ConflictError
+                connection.execute("UPDATE notes SET content = ?, updated = ? WHERE title = ?", (content, now, title))
+            else:
+                connection.execute(
+                    "INSERT INTO notes(title, content, created, updated) VALUES (?, ?, ?, ?)",
+                    (title, content, now, now),
+                )
+
+    def search(self, query):
+        if not query:
+            return []
+        with self.connect() as connection:
+            rows = connection.execute(
+                """SELECT title, content FROM notes
+                   WHERE instr(title, ?) > 0 OR instr(content, ?) > 0
+                   ORDER BY updated DESC, title ASC""",
+                (query, query),
+            ).fetchall()
+        results = []
+        for row in rows:
+            content = row["content"]
+            content_pos = content.find(query)
+            pos = max(content_pos, 0)
+            start, end = max(0, pos - 40), min(len(content), pos + len(query) + 40)
+            snippet = ("…" if start else "") + content[start:end].replace("\n", " ") + ("…" if end < len(content) else "")
+            if not snippet:
+                snippet = "标题匹配"
+            results.append({"title": row["title"], "snippet": snippet})
+        return results
+
+    def import_directory(self, source_dir, preserve_mtime=False):
+        source_dir = Path(source_dir)
+        imported = skipped = unchanged = 0
+        if not source_dir.is_dir():
+            return imported, skipped, unchanged
+        for path in sorted(source_dir.glob("*.md")):
+            if not path.is_file() or not valid_title(path.stem):
+                skipped += 1
+                continue
+            content = path.read_text(encoding="utf-8")
+            existing = self.get_note(path.stem)
+            if existing:
+                if existing["content"] == content:
+                    unchanged += 1
+                else:
+                    skipped += 1
+                continue
+            timestamp = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat() if preserve_mtime else None
+            self.save(path.stem, content, timestamp=timestamp)
+            imported += 1
+        return imported, skipped, unchanged
+
+    def export_directory(self, target_dir):
+        target_dir = Path(target_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        with self.connect() as connection:
+            rows = connection.execute("SELECT title, content FROM notes ORDER BY title ASC").fetchall()
+        for row in rows:
+            (target_dir / f"{row['title']}.md").write_text(row["content"], encoding="utf-8")
+        return len(rows)
+
+    def backup(self, target_path):
+        target_path = Path(target_path).resolve()
+        if target_path == self.db_path:
+            raise ValueError("备份文件不能与当前数据库相同")
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.connect() as source, sqlite3.connect(target_path) as target:
+            source.backup(target)
+
+
 class Handler(BaseHTTPRequestHandler):
-    data_dir = Path("kb_data")
-    web_dir = Path(__file__).resolve().parent / "web" / "dist"
+    store = None
+    web_dir = APP_DIR / "web" / "dist"
 
     def parse_request(self):
         # curl 可直接发送中文 URL；先编码高位字节，避免 Latin-1 控制字符被误判为空白。
-        self.raw_requestline = re.sub(
-            rb"[\x80-\xff]",
-            lambda match: f"%{match.group(0)[0]:02X}".encode("ascii"),
-            self.raw_requestline,
-        )
+        self.raw_requestline = re.sub(rb"[\x80-\xff]", lambda match: f"%{match.group(0)[0]:02X}".encode("ascii"), self.raw_requestline)
         return super().parse_request()
 
     def parsed_url(self):
-        # curl 可直接发送中文 URL；http.server 会先按 Latin-1 解读请求行。
         try:
             request_path = self.path.encode("latin-1").decode("utf-8")
         except (UnicodeEncodeError, UnicodeDecodeError):
@@ -135,64 +267,81 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = self.parsed_url()
         if parsed.path == "/api/list":
-            notes = [{"title": p.stem, "updated": datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()} for p in self.data_dir.glob("*.md") if p.is_file()]
-            notes.sort(key=lambda n: n["updated"], reverse=True); self.send_json({"notes": notes})
+            self.send_json({"notes": self.store.list_notes()})
         elif parsed.path == "/api/note":
             name = parse_qs(parsed.query).get("name", [""])[0]
             if not name.endswith(".md") or not valid_title(name[:-3]):
                 return self.send_error_json(400, "无效的笔记名称")
-            path = self.data_dir / name
-            if not path.is_file(): return self.send_error_json(404, "笔记不存在")
-            content = path.read_text(encoding="utf-8")
-            self.send_json({"title": path.stem, "content": content, "content_html": render_markdown(content)})
+            note = self.store.get_note(name[:-3])
+            if not note:
+                return self.send_error_json(404, "笔记不存在")
+            self.send_json({"title": note["title"], "content": note["content"], "content_html": render_markdown(note["content"])})
         elif parsed.path == "/api/search":
             query = parse_qs(parsed.query).get("q", [""])[0]
-            results = []
-            if query:
-                for path in self.data_dir.glob("*.md"):
-                    content = path.read_text(encoding="utf-8")
-                    title_pos, content_pos = path.stem.find(query), content.find(query)
-                    if title_pos >= 0 or content_pos >= 0:
-                        pos = max(content_pos, 0)
-                        start, end = max(0, pos - 40), min(len(content), pos + len(query) + 40)
-                        snippet = ("…" if start else "") + content[start:end].replace("\n", " ") + ("…" if end < len(content) else "")
-                        if not snippet: snippet = "标题匹配"
-                        results.append({"title": path.stem, "snippet": snippet})
-            self.send_json({"results": results})
+            self.send_json({"results": self.store.search(query)})
         elif parsed.path.startswith("/api/"):
             self.send_error_json(404, "接口不存在")
         else:
             self.send_static(parsed.path)
 
     def do_POST(self):
-        if self.parsed_url().path != "/api/save": return self.send_error_json(404, "接口不存在")
+        if self.parsed_url().path != "/api/save":
+            return self.send_error_json(404, "接口不存在")
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length > 2 * 1024 * 1024: return self.send_error_json(413, "笔记内容过大")
+            if length > 2 * 1024 * 1024:
+                return self.send_error_json(413, "笔记内容过大")
             data = json.loads(self.rfile.read(length).decode("utf-8"))
         except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
             return self.send_error_json(400, "JSON 格式错误")
         title, content = data.get("title"), data.get("content")
-        if not valid_title(title): return self.send_error_json(400, "标题不能为空，且不能含 /、\\ 或 ..")
-        if not isinstance(content, str): return self.send_error_json(400, "content 必须是字符串")
-        path = self.data_dir / (title + ".md")
-        if path.exists():
-            old = path.read_text(encoding="utf-8")
-            if old != content and data.get("original_content") != old:
-                return self.send_error_json(409, "同名笔记已存在且内容不同")
-        path.write_text(content, encoding="utf-8"); self.send_json({"ok": True})
+        if not valid_title(title):
+            return self.send_error_json(400, "标题不能为空，且不能含 /、\\ 或 ..")
+        if not isinstance(content, str):
+            return self.send_error_json(400, "content 必须是字符串")
+        try:
+            self.store.save(title, content, data.get("original_content"))
+        except ConflictError:
+            return self.send_error_json(409, "同名笔记已存在且内容不同")
+        self.send_json({"ok": True})
 
     def log_message(self, fmt, *args):
         print("%s - %s" % (self.address_string(), fmt % args))
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(description="本地 Web 知识库")
-    parser.add_argument("--port", type=int, default=8787); parser.add_argument("--dir", default="kb_data")
-    args = parser.parse_args(); Handler.data_dir = Path(args.dir); Handler.data_dir.mkdir(parents=True, exist_ok=True)
-    address = ("127.0.0.1", args.port); print(f"http://127.0.0.1:{args.port}", flush=True)
-    try: ThreadingHTTPServer(address, Handler).serve_forever()
-    except KeyboardInterrupt: pass
+    parser.add_argument("--port", type=int, default=8787)
+    parser.add_argument("--db", type=Path, default=DEFAULT_DB)
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--export", dest="export_dir", type=Path, metavar="目录")
+    actions.add_argument("--import", dest="import_dir", type=Path, metavar="目录")
+    actions.add_argument("--backup", dest="backup_file", type=Path, metavar="文件")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    store = SQLiteStore(args.db)
+    if args.export_dir:
+        count = store.export_directory(args.export_dir)
+        print(f"已导出 {count} 篇到 {args.export_dir}")
+        return
+    if args.import_dir:
+        imported, skipped, unchanged = store.import_directory(args.import_dir)
+        print(f"导入完成：新增 {imported} 篇，跳过冲突/无效 {skipped} 篇，内容相同 {unchanged} 篇")
+        return
+    if args.backup_file:
+        store.backup(args.backup_file)
+        print(f"已备份到 {args.backup_file}")
+        return
+    Handler.store = store
+    address = ("127.0.0.1", args.port)
+    print(f"http://127.0.0.1:{args.port}", flush=True)
+    try:
+        ThreadingHTTPServer(address, Handler).serve_forever()
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":

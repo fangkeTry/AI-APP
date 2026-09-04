@@ -1,0 +1,33 @@
+name: kb-app
+
+on:
+  push:
+    paths:
+      - "apps/kb-app/**"
+      - ".github/workflows/kb-app.yml"
+  pull_request:
+    paths:
+      - "apps/kb-app/**"
+      - ".github/workflows/kb-app.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test backend
+        working-directory: apps/kb-app
+        run: python3 -m unittest discover tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/kb-app/web/package-lock.json
+      - name: Build frontend
+        working-directory: apps/kb-app/web
+        run: |
+          npm ci
+          npm run build

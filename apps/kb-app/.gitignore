@@ -1,4 +1,5 @@
 kb_data/
+kb.db*
 __pycache__/
 web/node_modules/
 web/dist/
