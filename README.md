@@ -14,7 +14,7 @@
 |---|---|---|
 | [apps/kb-app](apps/kb-app/) | 本地 Web 知识库小站：列表/新建/编辑/markdown 渲染/搜索，Light/Dark 双主题 | React + Vite + TS + Tailwind 前端（`web/`）+ Python 3 标准库服务端（`kb.py` 托管静态产物 + 文件 API） |
 
-各应用启动方式见其 README（kb-app：`apps/kb-app/README.md`「启动方式」含完整/开发/纯 API 三种模式）。
+**本地启动**：每个应用自带一键启动脚本 `apps/<软件名>/start.sh`（幂等处理依赖/构建后拉起服务，端口用 `PORT` 覆盖）。kb-app：`cd apps/kb-app && ./start.sh` → http://127.0.0.1:8787。
 
 ## 开发流程
 

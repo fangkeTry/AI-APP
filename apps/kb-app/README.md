@@ -2,11 +2,22 @@
 
 > 建立：2026-09-04（「dsh 设计 → codex 实现 → dsh 评审」闭环第 1 个交付物）
 > 技术：前端 React 18 + Vite + TypeScript + Tailwind（`web/`，样式 token 拷贝自 `packages/ui-reference/design-tokens.json`）；服务端 Python 3 标准库零依赖（`kb.py`，托管前端构建产物 + 文件 API）。
+> 一键启动：`./start.sh`（详见下文「启动方式」）。
 > 设计简报：`docs/kb-app.brief.md`（初版）、`docs/rebuild-frontend.brief.md`（前端重做 pilot）；前端细节另见 `web/README.md`。
 
 ## 启动方式
 
-### 方式一：完整启动（构建后由 Python 服务托管，推荐日常使用）
+### 方式一：一键启动（推荐）
+
+```bash
+cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app
+./start.sh            # 默认端口 8787 → http://127.0.0.1:8787
+PORT=9000 ./start.sh  # 换端口
+```
+
+脚本幂等处理全部前置：`web/node_modules` 缺失自动 `npm install`；`web/dist` 缺失或源码比产物新自动 `npm run build`；然后拉起 `kb.py` 托管 `web/dist` + `/api` 文件 API。需要强制重建前端时先删除 `web/dist`。
+
+手动分步（脚本内部逻辑，备查/排障）：
 
 ```bash
 cd /home/fangke/dsh-test/projects/AI-APP/apps/kb-app/web
