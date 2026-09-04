@@ -1,0 +1,75 @@
+{
+  "$schema_note": "AI-APP 设计 tokens v1（2026-09-04 用户定案：结构=Apple 明亮留白；Light=Apple蓝+白；Dark=炭黑+紫罗兰）。单一源，经 style-dictionary 生成 Web Tailwind theme 与 NativeWind config。",
+  "core": {
+    "fontFamily": {
+      "ui": ["-apple-system", "BlinkMacSystemFont", "\"SF Pro Text\"", "\"PingFang SC\"", "\"Microsoft YaHei\"", "system-ui", "sans-serif"],
+      "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"]
+    },
+    "fontSize": { "xs": 12, "sm": 13, "base": 15, "lg": 17, "xl": 20, "2xl": 28, "3xl": 34 },
+    "fontWeight": { "regular": 400, "medium": 500, "semibold": 600 },
+    "lineHeight": { "tight": 1.25, "normal": 1.5 },
+    "spacing": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 20, "2xl": 24, "3xl": 32 },
+    "radius": { "sm": 6, "md": 10, "lg": 14, "pill": 999 },
+    "borderWidth": { "hairline": 1 },
+    "motion": { "fast": "120ms", "base": "200ms", "slow": "300ms", "ease": "cubic-bezier(0.4, 0, 0.2, 1)" },
+    "layout": {
+      "contentMax": 980,
+      "cardGap": 16,
+      "touchTargetMin": 44
+    }
+  },
+  "colors": {
+    "light": {
+      "bg": "#ffffff",
+      "bgSoft": "#f5f5f7",
+      "surface": "#ffffff",
+      "surfaceSoft": "#f5f5f7",
+      "border": "#e5e5ea",
+      "borderStrong": "#d1d1d6",
+      "text": "#1d1d1f",
+      "textSecondary": "#6e6e73",
+      "textTertiary": "#aeaeb2",
+      "accent": "#0071e3",
+      "accentHover": "#0077ed",
+      "accentActive": "#006edb",
+      "accentSoft": "#e8f1fd",
+      "onAccent": "#ffffff",
+      "link": "#0066cc",
+      "success": "#34c759",
+      "warning": "#ff9f0a",
+      "danger": "#ff3b30",
+      "dangerSoft": "#ffe5e3",
+      "shadowCard": "0 1px 2px rgba(0,0,0,0.04), 0 1px 6px rgba(0,0,0,0.04)"
+    },
+    "dark": {
+      "bg": "#0e0e12",
+      "bgSoft": "#14141b",
+      "surface": "#16161e",
+      "surfaceSoft": "#1b1b24",
+      "border": "#23232e",
+      "borderStrong": "#33333f",
+      "text": "#f2f2f4",
+      "textSecondary": "#9b9ba6",
+      "textTertiary": "#5d5d68",
+      "accent": "#7c6cf0",
+      "accentHover": "#8b7cf2",
+      "accentActive": "#6e5de8",
+      "accentSoft": "#1f1a33",
+      "onAccent": "#ffffff",
+      "link": "#a99af5",
+      "success": "#32d74b",
+      "warning": "#ffd60a",
+      "danger": "#ff453a",
+      "dangerSoft": "#3a1f1f",
+      "shadowCard": "0 1px 2px rgba(0,0,0,0.3)"
+    }
+  },
+  "componentHints": {
+    "button": "主按钮=pill 胶囊、accent 底、onAccent 文字；次按钮=ghost(透明底+border 描边+text)；触控目标≥44px",
+    "card": "surface 底、hairline 边框、radius md~lg、无重阴影；禁止粗边框与大投影",
+    "input": "surfaceSoft 底或 surface+边框；聚焦态 accent 描边；placeholder=textTertiary",
+    "nav": "透明底、文字导航、品牌 logo 圆角小方块(accent)；移动端底部 Tab 或汉堡由 app 决定",
+    "badge": "accentSoft 底 + accent 文字(亮)/accentHover 文字(暗)，radius pill",
+    "darkMode": "默认跟随系统 prefers-color-scheme，支持手动切换；Dark 版文字层级靠亮度而非边框"
+  }
+}

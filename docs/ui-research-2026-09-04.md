@@ -133,6 +133,15 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 - 选色方式：本地风格看板「主色试色条」圈选，避免语言描述。
 - 用户反馈（同日）：六色基础候选不够"高级"→ 追加低饱和/深色调候选（香槟金/墨绿/勃艮第/可可棕/陶土赤/深石墨，v2 试色条）；**app 类型先不定，先用一套默认主色跑通 pilot**，`type-preset` 表推迟到类型明确后再补。
 
+## 13. 风格定案 v2（用户 2026-09-04，终版基线）
+
+- **结构**：Apple 明亮留白（§8 C 组），双端通用。
+- **Light 模式** = 组合 1：Apple 蓝 `#0071e3` + 白底。
+- **Dark 模式** = 组合 3：炭黑 `#0e0e12` + 紫罗兰 `#7c6cf0`（默认跟随系统，可手动切换）。
+- 落地物：`packages/ui-reference/design-tokens.json`（单一 tokens 源，core/colors.light/colors.dark/componentHints）、`packages/ui-reference/style-guide.md`（codex 生成 UI 的强制规范与禁止项）。
+- 备注：Light/Dark 强调色不同（蓝 vs 紫）是用户选择；tokens 语义化，日后若想统一为同一色相只需改 accent 两处。
+- 下一步：用该基线跑 1 个 pilot 双端 app 验证一致性。
+
 ## 12. 后续待确认
 
 - 第一批 app 的类型清单（决定 type-preset 表）；
