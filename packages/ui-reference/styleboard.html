@@ -121,6 +121,13 @@
   .cx2{--acc:#7c6cf0;--accD:#5b4bd6;--nav:#000}
   .cx3{--bg:#0e0e12;--tx:#f2f2f4;--sub:#9b9ba6;--border:#23232e;--card:#17171f;--soft:#17171f;--acc:#7c6cf0;--accD:#a99af5;--nav:#f2f2f4}
   .cx3 .mini .btn.ghost{color:#d6d6e0;border:1px solid #33333f}
+  /* 组合4=统一蓝的暗色版（Apple 蓝同色相亮变体）；组合5=统一紫的亮色版 */
+  .cx4{--bg:#0e0e12;--tx:#f2f2f4;--sub:#9b9ba6;--border:#23232e;--card:#17171f;--soft:#17171f;--acc:#409cff;--accD:#64b4ff;--nav:#f2f2f4;--logoGrad:linear-gradient(135deg,#0071e3,#64b4ff)}
+  .cx4 .mini .btn.ghost{color:#d6d6e0;border:1px solid #33333f}
+  .cx5{--acc:#5f51d6;--accD:#4739b8;--nav:#000}
+  .cx5 .mini .pill{background:#eceaff;color:#4739b8;border:1px solid #d3cef5}
+  .cx5 .mini .logo{background:linear-gradient(135deg,#5f51d6,#8b7cf2)}
+  .cx1 .mini .logo{background:linear-gradient(135deg,#0071e3,#5ac8fa);border-radius:50%}
 </style>
 </head>
 <body>
@@ -238,6 +245,7 @@
   <h2>组合定案区 · 按你说的两个方向渲染</h2>
   <p class="hint">1) "Apple 蓝 + 白"（原 C 版）；2) "黑 + 紫"亮底版；3) "黑 + 紫"暗底版（呼应暗色科技感）。看整体氛围，哪个更像你要的？</p>
   <div class="combogrid" id="comboGrid"></div>
+  <p class="hint" style="margin-top:18px"><b>品牌一致性对照</b>：4 = 统一蓝的暗色版（同色相调亮）；5 = 统一紫的亮色版。若认可"同一品牌色"，4/5 与 1/3 二选一组合成 Light+Dark。</p>
 </div>
 
 <template id="miniTpl">
@@ -258,7 +266,9 @@
   const combos = [
     {t:'组合 1 · Apple 蓝 + 白', d:'结构=C（Apple 明亮留白），主色 #0071e3 苹果蓝。', cls:'cx cx1'},
     {t:'组合 2 · 黑 + 紫（亮底）', d:'白底黑字，主按钮/强调为紫罗兰 #7c6cf0（黑做文字与结构，紫做点缀）。', cls:'cx cx2'},
-    {t:'组合 3 · 黑 + 紫（暗底）', d:'炭黑底 #0e0e12 + 紫罗兰强调：Apple 式克制但走暗色科技感。', cls:'cx cx3'}
+    {t:'组合 3 · 黑 + 紫（暗底）', d:'炭黑底 #0e0e12 + 紫罗兰强调：Apple 式克制但走暗色科技感。', cls:'cx cx3'},
+    {t:'组合 4 · 统一蓝（暗色版）', d:'与组合 1 同一色相：炭黑底 + 亮蓝 #409cff（同 hue 暗色变体，品牌统一）。', cls:'cx cx4'},
+    {t:'组合 5 · 统一紫（亮色版）', d:'与组合 3 同一色相：白底 + 深紫 #5f51d6（同 hue 亮色变体，品牌统一）。', cls:'cx cx5'}
   ];
   const grid = document.getElementById('comboGrid');
   const tpl = document.getElementById('miniTpl');
