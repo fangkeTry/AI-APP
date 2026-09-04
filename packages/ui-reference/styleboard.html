@@ -81,6 +81,18 @@
   .v4 .mini .btn.ghost{color:#37352f;border:1px solid #d9d5cb}
   .v4 .mini input{border:1px solid #e3e0d8;background:#fff}
   .v4 .mini .pill{background:#fff;border:1px solid #e3e0d8}
+  /* ---------- 主色试色条 ---------- */
+  .tonewrap{max-width:1400px;margin:0 auto;padding:0 32px 40px}
+  .tonewrap h2{font-size:16px;margin:0 0 4px}
+  .tonewrap .hint{font-size:13px;color:var(--mut);margin:0 0 14px;line-height:1.6}
+  .tone{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .tcard{border:1px solid var(--bd);border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .tcard .sw{display:flex;gap:6px;align-items:center}
+  .tcard .sw i{width:22px;height:22px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.08)}
+  .tcard .nm{font-weight:600;font-size:13px}
+  .tcard .hex{font-size:11px;color:var(--mut);font-family:ui-monospace,Menlo,monospace}
+  .tcard .btn{border:0;border-radius:999px;color:#fff;padding:7px 0;font-size:12.5px;font-weight:600;cursor:pointer}
+  .tcard .lnk{font-size:12.5px;font-weight:600;cursor:pointer;background:none;border:0;padding:0;text-align:left}
 </style>
 </head>
 <body>
@@ -170,6 +182,19 @@
     </div></div>
   </section>
 
+</div>
+
+<div class="tonewrap">
+  <h2>主色试色条 · 结构沿用 C（Apple 明亮留白），只换强调色</h2>
+  <p class="hint">不喜欢 Apple 蓝？从下面圈 2-3 个顺眼的（按钮/链接/高亮都会用它）。可以告诉我"第 X 个接近了，但再深/再柔和一点"。选定后我生成三层 tokens（core 通用 + accent 主色 + 按类型推荐色）。</p>
+  <div class="tone">
+    <div class="tcard"><div class="sw"><i style="background:#3a3a3c"></i><span class="nm">石墨黑</span></div><span class="hex">#3a3a3c</span><button class="btn" style="background:#3a3a3c">主要按钮</button><button class="lnk" style="color:#3a3a3c">强调链接</button></div>
+    <div class="tcard"><div class="sw"><i style="background:#10a37f"></i><span class="nm">翡翠绿</span></div><span class="hex">#10a37f</span><button class="btn" style="background:#10a37f">主要按钮</button><button class="lnk" style="color:#10a37f">强调链接</button></div>
+    <div class="tcard"><div class="sw"><i style="background:#ff9f0a"></i><span class="nm">琥珀橙</span></div><span class="hex">#ff9f0a</span><button class="btn" style="background:#ff9f0a">主要按钮</button><button class="lnk" style="color:#b26a00">强调链接</button></div>
+    <div class="tcard"><div class="sw"><i style="background:#ff453a"></i><span class="nm">珊瑚红</span></div><span class="hex">#ff453a</span><button class="btn" style="background:#ff453a">主要按钮</button><button class="lnk" style="color:#d6291f">强调链接</button></div>
+    <div class="tcard"><div class="sw"><i style="background:#7c6cf0"></i><span class="nm">紫罗兰</span></div><span class="hex">#7c6cf0</span><button class="btn" style="background:#7c6cf0">主要按钮</button><button class="lnk" style="color:#5b4bd6">强调链接</button></div>
+    <div class="tcard"><div class="sw"><i style="background:#2ab7a9"></i><span class="nm">青碧</span></div><span class="hex">#2ab7a9</span><button class="btn" style="background:#2ab7a9">主要按钮</button><button class="lnk" style="color:#1e8f84">强调链接</button></div>
+  </div>
 </div>
 </body>
 </html>
