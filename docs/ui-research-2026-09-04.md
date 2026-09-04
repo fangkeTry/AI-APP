@@ -153,6 +153,12 @@ skills 让 codex 生成即符合风格；registry 使沉淀可复用。
 
 Python 排除（用户自评难找 bug）。pilot（kb-app）属**第一档**：重做前端为主，后端按本地形态定。
 
+**存储选型决定轴（2026-09-04 业界对照定案，详见 `docs/indie-ruleset-research-2026-09-04.md`）**：
+- 本地单应用/单设备数据 → **默认 SQLite**（WAL+事务，需检索加 FTS5；sqlite.org 判定"SQLite 竞争的是 fopen()"）；
+- 仅「数据须用户用其他工具直接打开 / markdown 生态互通」→ 开放文件格式（Obsidian 模式），但只作**导入/导出通道**，须在简报写明理由并配套可靠性；
+- 多人/上线服务 → client/server 数据库（上表 Spring Boot 档），另按 AGENTS.md §10 工程化基线补红线清单。
+- kb-app 已按此定案进入 SQLite 迁移（`apps/kb-app/docs/storage-sqlite.brief.md`）。
+
 ## 12. 后续待确认
 
 - 第一批 app 的类型清单（决定 type-preset 表）；

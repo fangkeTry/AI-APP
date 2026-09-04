@@ -2,7 +2,7 @@
 
 > 背景：kb-app 是独立开发通用规则的 **demo 试验场**——探索各种约定，真实开发时按一套通用规则执行。
 > 因此约束从探索期就要按「**能真实上线使用**」的规格设计，由**业界通行做法**裁决（不是拍脑袋定）。
-> 本文件 = 调研结论 + 现有约束对照 + 修订草案；**草案待用户拍板后**才改写约定（AGENTS.md §10、产品分级框架、简报模板、知识库）。
+> 状态：~~草案~~ → **已定案（2026-09-04 晚，P1–P5 用户拍板）**；定案记录见 §6。规则正文已写入 dsh 工作区 AGENTS.md §10 与简报模板。
 
 ## 1. 调研源（按维度，含时效）
 
@@ -62,13 +62,22 @@
 | 仓库 | monorepo（git 组织） | monorepo+pnpm+Turborepo | 多 app 后引 pnpm workspace；暂不阻塞 |
 | 版本化 | 无 tag/无 changelog | SemVer + changelog | 待拍板：何时起用（首个可发布版？） |
 
-## 4. 修订草案（待用户拍板）
+## 4. 修订草案（2026-09-04 晚已定案，见 §6）
 
-- **P1 存储规则**：本地档默认 SQLite（+FTS5 检索），开放格式场景例外需写明理由与配套可靠性。kb-app 作为「开放 markdown 格式」特例保留文件形态，但**补可靠性缺口**（原子写+备份文档）；将来新本地 app 默认 SQLite。
-- **P2 数据可靠性补课（kb-app 下一份 codex 简报候选）**：①保存改原子写（临时文件+rename+fsync）；②README「备份与恢复」节（拷贝目录=备份、恢复=放回、演练命令）；③API 冒烟测试（unittest 起服务测 5 接口）+ GitHub Actions CI。
-- **P3 提交规范**：dsh 检查点是否引入 Conventional Commits 前缀（`feat: 中文`/`docs: 中文`…），保留中文说明正文（现 checkpoint 语义=chore 类）。倾向：引入轻量 CC，机器可读性更好，与业界一致。
-- **P4 tier-2 上线基线写入约定**：把「Spring Boot + 数据库」一句话扩为 checklist 红线（鉴权/限流/TLS/结构化日志/health/优雅停机/备份恢复/secrets 环境变量/CI），落到 AGENTS.md §10 或独立约定文档。
-- **P5 测试/CI 规则**：每个软件（demo 也逐步）至少：单元测试覆盖核心逻辑 + CI(build+test)；简报模板把测试与 CI 列为必产项（按档位）。
+- **P1 存储规则**：~~本地档默认 SQLite，开放格式场景例外~~ → 定案：**kb-app 也迁移 SQLite**（md 只作导入/导出通道）。
+- **P2 数据可靠性补课**：定案：**立即排下一份简报**（内容并入 P1 迁移简报：原子写由 SQLite 承担 + 备份/恢复文档 + 测试 + CI）。
+- **P3 提交规范**：定案：**引入轻量 Conventional Commits 前缀**（feat:/fix:/docs:/chore:/refactor:/test: + 中文正文），所有仓库适用。
+- **P4 上线基线 + P5 测试/CI**：定案：**写入 AGENTS.md §10 硬性约定** + 更新简报模板必产项。
+
+## 6. 定案记录（2026-09-04）
+
+| 决策点 | 定案 | 落地 |
+|---|---|---|
+| P1 存储 | **本地档默认 SQLite；kb-app 也迁移 SQLite**，md 仅作导入/导出通道；开放文件格式只允许特例+简报写明理由+配套可靠性 | AGENTS.md §10「存储默认 SQLite」；`apps/kb-app/docs/storage-sqlite.brief.md`（下一份 codex 简报） |
+| P2 补课 | **立即排下一份简报**（原子写/备份恢复/测试/CI 随迁移一起做） | 同上简报 |
+| P3 提交 | **轻量 Conventional Commits**（feat:/fix:/docs:/chore:/refactor:/test: + 中文正文），原 `checkpoint:` 前缀废止 | AGENTS.md §2 + §10「提交规范」 |
+| P4 上线基线 | **写入约定**：每软件单测+CI(GitHub Actions)+README 备份恢复节；tier-2 红线清单（鉴权/限流/TLS/日志/health/优雅停机/重启不丢数据/备份恢复演练/secrets 环境变量）；本地单机档豁免项写明 | AGENTS.md §10「工程化分档基线」；TEMPLATE.brief.md §6 |
+| P5 测试/CI | 同上，简报模板列必产项（按档） | TEMPLATE.brief.md §6 |
 
 ## 5. 落地路径（拍板后执行）
 
